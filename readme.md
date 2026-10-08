@@ -48,7 +48,8 @@ flowchart LR
     subgraph INFRA["Spring Cloud"]
         CFG[config-server] --- EUR[eureka-server]
     end
-    BATCH[bank-batch<br/>3 Jobs Spring Batch]
+    BATCH["bank-batch · NUEVO EN LA EFT<br/>3 Jobs Spring Batch<br/>reintentos · particiones · reejecución automática"]
+    LEGACY[/"CSV del legacy<br/>fin_legacy_data"/]
     DB[(Oracle Autonomous DB<br/>un esquema por servicio)]
     W --> BW
     M --> BM
@@ -60,8 +61,14 @@ flowchart LR
     MT -- eventos --> BRK
     BRK -- eventos --> MC & MA & MT
     MC & MT & MA --> DB
+    LEGACY --> BATCH
     BATCH --> DB
+    classDef nuevo fill:#fde68a,stroke:#b45309,stroke-width:2px,color:#000
+    class BATCH,LEGACY nuevo
 ```
+
+En amarillo, lo que agrega la Evaluación Final: la migración de los procesos batch legacy,
+sobre el mismo ecosistema de BFF y microservicios.
 
 Todo corre en contenedores orquestados por `bank-cloud/docker-compose.yaml`, en una EC2 de AWS
 contra la Oracle Autonomous Database del banco.
