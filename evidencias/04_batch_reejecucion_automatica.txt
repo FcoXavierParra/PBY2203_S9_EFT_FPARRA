@@ -1,0 +1,40 @@
+﻿Evidencia EFT - 04_batch_reejecucion_automatica
+Comando: java -jar bank-batch.jar --spring.batch.job.name=interesesJob --bank.simulacion.fallas-conexion=2
+Dataset: fin_legacy_data/semana_3 (por defecto)
+Codigo de salida del proceso: 0
+
+16:15:26.511 INFO  [main] c.d.b.batch.common.JobCompletionListener -  INICIA Job 'interesesJob'  (JobExecution id=1)
+16:15:26.511 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Parametros           : {'run.id':'{value=1, type=class java.lang.Long, identifying=true}'}
+16:15:26.511 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Hilos (core/max)     : 3 / 3
+16:15:26.562 ERROR [main] c.d.b.b.common.VerificarConexionConfig - [CONEXION] Verificacion 1: la base no responde (falla SIMULADA 1 de 2).
+16:15:26.585 INFO  [main] c.d.b.batch.common.JobCompletionListener -  TERMINA Job 'interesesJob' -> FAILED (exitCode=FAILED)
+16:15:26.585 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Duracion total       : 74 ms
+16:15:26.586 INFO  [main] c.d.b.batch.common.JobCompletionListener -    verificarConexionStep -> FAILED | leidas=0 escritas=0 filtradas=0 descartadas=0 commits=0 rollbacks=1
+16:15:26.586 INFO  [main] c.d.b.batch.common.JobCompletionListener -  leidas=0 escritas=0 descartadas=0
+16:15:26.601 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Rendimiento global   : 0,0 filas escritas/segundo
+16:15:26.602 ERROR [main] c.d.b.batch.common.JobCompletionListener -    causa: org.springframework.jdbc.CannotGetJdbcConnectionException: Conexion a la base caida (simulada por bank.simulacion.fallas-conexion)
+16:15:26.607 WARN  [main] c.d.b.batch.common.ReejecucionAutomatica - [REEJECUCION] 'interesesJob' termino FAILED por una falla tecnica. Relanzamiento 1 de 3 en 5000 ms.
+16:15:31.672 INFO  [main] c.d.b.batch.common.JobCompletionListener -  INICIA Job 'interesesJob'  (JobExecution id=2)
+16:15:31.672 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Parametros           : {'run.id':'{value=1, type=class java.lang.Long, identifying=true}'}
+16:15:31.672 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Hilos (core/max)     : 3 / 3
+16:15:31.680 ERROR [main] c.d.b.b.common.VerificarConexionConfig - [CONEXION] Verificacion 2: la base no responde (falla SIMULADA 2 de 2).
+16:15:31.683 INFO  [main] c.d.b.batch.common.JobCompletionListener -  TERMINA Job 'interesesJob' -> FAILED (exitCode=FAILED)
+16:15:31.683 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Duracion total       : 12 ms
+16:15:31.683 INFO  [main] c.d.b.batch.common.JobCompletionListener -    verificarConexionStep -> FAILED | leidas=0 escritas=0 filtradas=0 descartadas=0 commits=0 rollbacks=1
+16:15:31.683 INFO  [main] c.d.b.batch.common.JobCompletionListener -  leidas=0 escritas=0 descartadas=0
+16:15:31.684 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Rendimiento global   : 0,0 filas escritas/segundo
+16:15:31.684 ERROR [main] c.d.b.batch.common.JobCompletionListener -    causa: org.springframework.jdbc.CannotGetJdbcConnectionException: Conexion a la base caida (simulada por bank.simulacion.fallas-conexion)
+16:15:31.685 INFO  [main] c.d.b.batch.common.ReejecucionAutomatica - [REEJECUCION] Relanzamiento 1 -> FAILED (JobExecution id=2, misma JobInstance id=1)
+16:15:31.685 WARN  [main] c.d.b.batch.common.ReejecucionAutomatica - [REEJECUCION] 'interesesJob' termino FAILED por una falla tecnica. Relanzamiento 2 de 3 en 10000 ms.
+16:15:41.703 INFO  [main] c.d.b.batch.common.JobCompletionListener -  INICIA Job 'interesesJob'  (JobExecution id=3)
+16:15:41.703 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Parametros           : {'run.id':'{value=1, type=class java.lang.Long, identifying=true}'}
+16:15:41.706 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Hilos (core/max)     : 3 / 3
+16:15:41.707 INFO  [main] c.d.b.b.common.VerificarConexionConfig - [CONEXION] Verificacion 3: base disponible (H2).
+16:15:43.305 INFO  [main] c.d.b.batch.common.CalidadDatosDecider - [POLITICA] Step 'calcularInteresesStep' dentro de tolerancia: 681 descartadas de 1000 (68% <= 75%). leidas=664 filtradas=0 escritas=319. Se continua.
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -  TERMINA Job 'interesesJob' -> COMPLETED (exitCode=COMPLETED)
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Duracion total       : 1600 ms
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -    verificarConexionStep -> COMPLETED | leidas=0 escritas=0 filtradas=0 descartadas=0 commits=1 rollbacks=0
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -    calcularInteresesStep -> COMPLETED | leidas=664 escritas=319 filtradas=0 descartadas=681 commits=137 rollbacks=345
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -  leidas=664 escritas=319 descartadas=681
+16:15:43.305 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Rendimiento global   : 199,4 filas escritas/segundo
+16:15:43.307 INFO  [main] c.d.b.batch.common.ReejecucionAutomatica - [REEJECUCION] Relanzamiento 2 -> COMPLETED (JobExecution id=3, misma JobInstance id=1)

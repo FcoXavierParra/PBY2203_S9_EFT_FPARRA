@@ -1,0 +1,17 @@
+﻿Evidencia EFT - 05_batch_rechazo_por_calidad
+Comando: java -jar bank-batch.jar --spring.batch.job.name=transaccionesJob --bank.politicas.tolerancia-descartes=0.10
+Dataset: fin_legacy_data/semana_3 (por defecto)
+Codigo de salida del proceso: 1
+
+16:16:20.048 INFO  [main] c.d.b.batch.common.JobCompletionListener -  INICIA Job 'transaccionesJob'  (JobExecution id=1)
+16:16:20.048 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Parametros           : {'run.id':'{value=1, type=class java.lang.Long, identifying=true}'}
+16:16:20.048 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Hilos (core/max)     : 3 / 3
+16:16:20.108 INFO  [main] c.d.b.b.common.VerificarConexionConfig - [CONEXION] Verificacion 1: base disponible (H2).
+16:16:21.915 ERROR [main] c.d.b.batch.common.CalidadDatosDecider - [POLITICA] Step 'leerTransaccionesStep' descarto 520 de 1000 filas (52%), sobre la tolerancia de 10%. El archivo de origen viene mal. El Job termina FAILED.
+16:16:21.921 INFO  [main] c.d.b.batch.common.JobCompletionListener -  TERMINA Job 'transaccionesJob' -> FAILED (exitCode=FAILED)
+16:16:21.922 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Duracion total       : 1873 ms
+16:16:21.922 INFO  [main] c.d.b.batch.common.JobCompletionListener -    verificarConexionStep -> COMPLETED | leidas=0 escritas=0 filtradas=0 descartadas=0 commits=1 rollbacks=0
+16:16:21.922 INFO  [main] c.d.b.batch.common.JobCompletionListener -    leerTransaccionesStep -> COMPLETED | leidas=789 escritas=392 filtradas=88 descartadas=520 commits=161 rollbacks=309
+16:16:21.922 INFO  [main] c.d.b.batch.common.JobCompletionListener -  leidas=789 escritas=392 descartadas=520
+16:16:21.922 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Rendimiento global   : 209,3 filas escritas/segundo
+16:16:21.924 ERROR [main] c.d.b.batch.common.ReejecucionAutomatica - [REEJECUCION] 'transaccionesJob' FAILED por calidad de datos (descartes 52% sobre la tolerancia). No se relanza: el archivo de origen hay que corregirlo.

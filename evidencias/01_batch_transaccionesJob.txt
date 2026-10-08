@@ -1,0 +1,17 @@
+﻿Evidencia EFT - 01_batch_transaccionesJob
+Comando: java -jar bank-batch.jar --spring.batch.job.name=transaccionesJob
+Dataset: fin_legacy_data/semana_3 (por defecto)
+Codigo de salida del proceso: 0
+
+16:13:13.359 INFO  [main] c.d.b.batch.common.JobCompletionListener -  INICIA Job 'transaccionesJob'  (JobExecution id=1)
+16:13:13.359 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Parametros           : {'run.id':'{value=1, type=class java.lang.Long, identifying=true}'}
+16:13:13.359 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Hilos (core/max)     : 3 / 3
+16:13:13.434 INFO  [main] c.d.b.b.common.VerificarConexionConfig - [CONEXION] Verificacion 1: base disponible (H2).
+16:13:15.212 INFO  [main] c.d.b.batch.common.CalidadDatosDecider - [POLITICA] Step 'leerTransaccionesStep' dentro de tolerancia: 520 descartadas de 1000 (52% <= 75%). leidas=789 filtradas=88 escritas=392. Se continua.
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -  TERMINA Job 'transaccionesJob' -> COMPLETED (exitCode=COMPLETED)
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Duracion total       : 2907 ms
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -    verificarConexionStep -> COMPLETED | leidas=0 escritas=0 filtradas=0 descartadas=0 commits=1 rollbacks=0
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -    leerTransaccionesStep -> COMPLETED | leidas=789 escritas=392 filtradas=88 descartadas=520 commits=162 rollbacks=309
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -    resumenDiarioStep -> COMPLETED | leidas=0 escritas=239 filtradas=0 descartadas=0 commits=1 rollbacks=0
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -  leidas=789 escritas=631 descartadas=520
+16:13:16.266 INFO  [main] c.d.b.batch.common.JobCompletionListener -  Rendimiento global   : 217,1 filas escritas/segundo
