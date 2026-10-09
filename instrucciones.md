@@ -124,18 +124,31 @@ por eso `ms-cuentas` va con **una** réplica. Con Oracle (ver `despliegue.md`) c
 | config-server | 7888 (interno) | `docker compose ps` → healthy |
 | eureka-server | 8761 | `http://localhost:8761`: lista las instancias registradas |
 | auth-server | 9000 | `curl http://localhost:9000/.well-known/oauth-authorization-server` |
-| broker-mensajeria | 61616 / 8161 | `curl -u admin-broker:admin-broker-2026 http://localhost:8161/admin/topologia` |
+| broker-mensajeria | 61616 / 8161 | `curl -u "admin-broker:$BROKER_CLAVE_ADMIN" http://localhost:8161/admin/topologia` |
 | ms-cuentas, ms-transferencias, ms-auditoria | 8090-8092 (internos) | healthy, y registrados en Eureka |
 | bff-web / bff-movil / bff-cajero | 8081 / 8082 / 8083 | `curl -k https://localhost:8081/actuator/health` |
 
 ### Usuarios de prueba
 
-| Usuario | Clave | Cuenta | Canales |
+Las claves no se escriben aquí. Cada una se lee de una variable de entorno y, si no está
+definida, se usa el valor de desarrollo de `config-repo/auth-server.yml` (personas y clientes
+OAuth) o `config-repo/broker-mensajeria.yml` (usuarios del broker). Un despliegue real las
+define en su entorno.
+
+| Usuario | Variable de la clave | Cuenta | Canales |
 |---|---|---|---|
-| `cliente` | `cliente123` | 105 | web, móvil |
-| `cliente2` | `cliente456` | 107 | web, móvil |
-| `ejecutivo` | `ejecutivo123` | cartera completa | web |
-| terminal `cajero-terminal-01` | `terminal-01-desarrollo-2026` | — | cajero (PIN `1234`) |
+| `cliente` | `AUTH_CLAVE_CLIENTE` | 105 | web, móvil |
+| `cliente2` | `AUTH_CLAVE_CLIENTE2` | 107 | web, móvil |
+| `ejecutivo` | `AUTH_CLAVE_EJECUTIVO` | cartera completa | web |
+| terminal `cajero-terminal-01` | `AUTH_SECRETO_TERMINAL_01` | — | cajero (PIN `1234`) |
+| `admin-broker` (consola del broker) | `BROKER_CLAVE_ADMIN` | — | — |
+
+Los ejemplos con `curl` de más abajo toman las dos últimas de la terminal:
+
+```bash
+export AUTH_SECRETO_TERMINAL_01=<secreto del terminal>
+export BROKER_CLAVE_ADMIN=<clave de admin-broker>
+```
 
 ### Probar OAuth 2.0 y los tres canales
 
@@ -148,7 +161,7 @@ Pruebas puntuales con `curl`:
 
 ```bash
 # 1. Un token de máquina (client_credentials) para el terminal del cajero
-curl -s -u cajero-terminal-01:terminal-01-desarrollo-2026 \
+curl -s -u "cajero-terminal-01:$AUTH_SECRETO_TERMINAL_01" \
      -d grant_type=client_credentials -d scope=cajero.terminal \
      http://localhost:9000/oauth2/token
 # 2. Abrir sesión en el cajero con ese token y el PIN del cliente
@@ -181,7 +194,7 @@ curl -k https://localhost:8081/actuator/health   # estado de cada Circuit Breake
 ### Probar la mensajería
 
 ```bash
-curl -u admin-broker:admin-broker-2026 http://localhost:8161/admin/topologia
+curl -u "admin-broker:$BROKER_CLAVE_ADMIN" http://localhost:8161/admin/topologia
 ```
 
 Muestra cada tópico de la saga, sus suscripciones, consumidores y mensajes recibidos y

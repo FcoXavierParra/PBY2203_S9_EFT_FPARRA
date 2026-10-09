@@ -136,7 +136,7 @@ Paneles, por túnel SSH:
 ```bash
 ssh -i llave.pem -L 8761:127.0.0.1:8761 -L 8161:127.0.0.1:8161 ubuntu@<ip-publica>
 # Eureka:  http://localhost:8761
-# Broker:  http://localhost:8161/admin/topologia   (admin-broker / admin-broker-2026)
+# Broker:  http://localhost:8161/admin/topologia   (usuario admin-broker, clave en BROKER_CLAVE_ADMIN)
 ```
 
 ## Paso 7. Escalar

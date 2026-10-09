@@ -37,8 +37,8 @@ application-local.properties
 # Paquete de entrega
 # ---------------------------------------------------------------------------
 # El ZIP se sube a AVA, no al repositorio: duplicaria todo el contenido.
-Exp3_S8_*/
-Exp3_S8_*.zip
+EFT_PBY2203_*/
+*.zip
 
 # ---------------------------------------------------------------------------
 # Build

@@ -43,6 +43,16 @@ $ssh = Join-Path $env:SystemRoot "System32\OpenSSH\ssh.exe"
 $scp = Join-Path $env:SystemRoot "System32\OpenSSH\scp.exe"
 $vm = "ubuntu@$Servidor"
 
+# Claves de los usuarios y clientes de prueba: las mismas variables de entorno
+# que lee el auth-server (config-repo/auth-server.yml). No se escriben aqui.
+$claves = @{}
+foreach ($v in "AUTH_SECRETO_BFF_WEB", "AUTH_SECRETO_BFF_MOVIL", "AUTH_SECRETO_TERMINAL_01",
+               "AUTH_CLAVE_CLIENTE", "AUTH_CLAVE_CLIENTE2", "AUTH_CLAVE_EJECUTIVO") {
+    $valor = [Environment]::GetEnvironmentVariable($v)
+    if (-not $valor) { Write-Error "Falta la variable de entorno $v"; exit 1 }
+    $claves[$v] = $valor
+}
+
 function EnVm([string]$comando, [string]$entrada) {
     # La entrada (un token) viaja por stdin y no por la linea de comandos. Se
     # antepone una linea vacia: PowerShell 5.1 agrega un BOM al hacer pipe a
@@ -97,33 +107,33 @@ $cuerpo = {
     $m = & $curl -s "$Auth/.well-known/oauth-authorization-server" | ConvertFrom-Json
     "  issuer={0}`n  grant_types={1}`n  pkce={2}" -f $m.issuer, ($m.grant_types_supported -join ','), ($m.code_challenge_methods_supported -join ',')
     "-- 1.2 client_credentials: bff-web pide un token para ms-cuentas"
-    $t = TokenMaquina "bff-web" "bff-web-desarrollo-2026" "cuentas.leer"
+    $t = TokenMaquina "bff-web" $claves.AUTH_SECRETO_BFF_WEB "cuentas.leer"
     $c = Carga (($t.cuerpo | ConvertFrom-Json).access_token)
     "  HTTP {0}  sub={1} aud={2} scope={3} dura={4}s" -f $t.codigo, $c.sub, ($c.aud -join ','), ($c.scope -join ','), ($c.exp - $c.iat)
     "-- 1.3 dos scopes de dos microservicios: el token va dirigido a ambos"
-    $t = TokenMaquina "bff-web" "bff-web-desarrollo-2026" "cuentas.leer transferencias.crear"
+    $t = TokenMaquina "bff-web" $claves.AUTH_SECRETO_BFF_WEB "cuentas.leer transferencias.crear"
     $c = Carga (($t.cuerpo | ConvertFrom-Json).access_token)
     "  HTTP {0}  aud={1} scope={2}" -f $t.codigo, ($c.aud -join ','), ($c.scope -join ',')
     "-- 1.4 secreto equivocado"
     $t = TokenMaquina "bff-web" "otro" "cuentas.leer"; "  HTTP {0}  {1}" -f $t.codigo, $t.cuerpo
     "-- 1.5 bff-movil pide cuentas.operar, que no tiene asignado"
-    $t = TokenMaquina "bff-movil" "bff-movil-desarrollo-2026" "cuentas.operar"; "  HTTP {0}  {1}" -f $t.codigo, $t.cuerpo
+    $t = TokenMaquina "bff-movil" $claves.AUTH_SECRETO_BFF_MOVIL "cuentas.operar"; "  HTTP {0}  {1}" -f $t.codigo, $t.cuerpo
     "-- 1.6 authorization_code + PKCE: una persona entra por el canal web"
-    $p = TokenPersona "canal-web" "cliente" "cliente123"
+    $p = TokenPersona "canal-web" "cliente" $claves.AUTH_CLAVE_CLIENTE
     "  redireccion -> {0}" -f ($p.redireccion -replace 'code=[^&]*', 'code=<...>')
     $c = Carga (($p.cuerpo | ConvertFrom-Json).access_token)
     "  HTTP {0}  sub={1} aud={2} canal={3} roles={4} cuenta={5} dura={6}s" -f $p.codigo, $c.sub, ($c.aud -join ','), $c.canal, ($c.roles -join ','), $c.cuenta, ($c.exp - $c.iat)
     "-- 1.7 el ejecutivo no esta habilitado en el canal movil"
-    $p = TokenPersona "canal-movil" "ejecutivo" "ejecutivo123"; "  HTTP {0}  {1}" -f $p.codigo, $p.cuerpo
+    $p = TokenPersona "canal-movil" "ejecutivo" $claves.AUTH_CLAVE_EJECUTIVO; "  HTTP {0}  {1}" -f $p.codigo, $p.cuerpo
     "-- 1.8 codigo canjeado sin el verificador PKCE"
-    $p = TokenPersona "canal-web" "cliente2" "cliente456" -SinVerificador; "  HTTP {0}" -f $p.codigo
+    $p = TokenPersona "canal-web" "cliente2" $claves.AUTH_CLAVE_CLIENTE2 -SinVerificador; "  HTTP {0}" -f $p.codigo
     "-- 1.9 clave equivocada en el formulario de login"
     $p = TokenPersona "canal-web" "cliente" "mala"; "  tras login -> {0}   token HTTP {1}" -f ($p.tras_login -replace '^.*/login', '/login'), $p.codigo
 
     # ---------------------------------------------------------------------
     Titulo "2. Los tres canales, protegidos con tokens del auth-server"
-    $tc = ((TokenPersona "canal-web" "cliente" "cliente123").cuerpo | ConvertFrom-Json).access_token
-    $te = ((TokenPersona "canal-web" "ejecutivo" "ejecutivo123").cuerpo | ConvertFrom-Json).access_token
+    $tc = ((TokenPersona "canal-web" "cliente" $claves.AUTH_CLAVE_CLIENTE).cuerpo | ConvertFrom-Json).access_token
+    $te = ((TokenPersona "canal-web" "ejecutivo" $claves.AUTH_CLAVE_EJECUTIVO).cuerpo | ConvertFrom-Json).access_token
     "-- WEB (8081)"
     $r = Llamar GET "$web/cuentas/105" $null; "  sin token, cuenta 105            -> {0}" -f $r.codigo
     $r = Llamar GET "$web/cuentas/105" $tc;   "  cliente, SU cuenta 105           -> {0}  {1}" -f $r.codigo, (Corto $r.cuerpo)
@@ -136,7 +146,7 @@ $cuerpo = {
     Start-Sleep -Seconds 8
     "  saldo de la 105 antes {0}, despues de la saga {1}" -f $antes, (Saldo $tc)
     "-- MOVIL (8082)"
-    $tm = ((TokenPersona "canal-movil" "cliente" "cliente123").cuerpo | ConvertFrom-Json).access_token
+    $tm = ((TokenPersona "canal-movil" "cliente" $claves.AUTH_CLAVE_CLIENTE).cuerpo | ConvertFrom-Json).access_token
     $r = Llamar GET "$movil/cuentas/105/resumen" $tm; "  cliente movil, SU cuenta         -> {0}  {1}" -f $r.codigo, (Corto $r.cuerpo)
     $r = Llamar GET "$movil/cuentas/107/resumen" $tm; "  cliente movil, cuenta ajena      -> {0}" -f $r.codigo
     $r = Llamar GET "$movil/cuentas/105/resumen" $tc; "  token WEB en el BFF movil        -> {0}" -f $r.codigo
@@ -146,7 +156,7 @@ $cuerpo = {
     # 10.150: se usa la de mayor saldo, que el ejecutivo ve en la cartera.
     $cc = (@(& $curl -sk -H "Authorization: Bearer $te" "$web/cuentas" | ConvertFrom-Json) | ForEach-Object { $_ } | Sort-Object saldo -Descending | Select-Object -First 1).cuentaId
     "  cuenta del cajero: $cc (la de mayor saldo)"
-    $tt = ((TokenMaquina "cajero-terminal-01" "terminal-01-desarrollo-2026" "cajero.terminal").cuerpo | ConvertFrom-Json).access_token
+    $tt = ((TokenMaquina "cajero-terminal-01" $claves.AUTH_SECRETO_TERMINAL_01 "cajero.terminal").cuerpo | ConvertFrom-Json).access_token
     $r = Llamar POST "$cajero/sesion" $null @{} ('{"cuentaId":' + $cc + ',"pin":"1234"}'); "  sesion sin token de terminal     -> {0}" -f $r.codigo
     $r = Llamar POST "$cajero/sesion" $tc @{} ('{"cuentaId":' + $cc + ',"pin":"1234"}');   "  sesion con token de PERSONA web  -> {0}" -f $r.codigo
     $r = Llamar POST "$cajero/sesion" $tt @{} ('{"cuentaId":' + $cc + ',"pin":"9999"}');   "  terminal, PIN malo               -> {0}" -f $r.codigo
@@ -170,12 +180,12 @@ $cuerpo = {
     # ---------------------------------------------------------------------
     Titulo "4. Bulkhead hacia ms-cuentas (bff-web, 20 llamadas simultaneas)"
     "Ficha de una cuenta, rafagas disparadas dentro de la EC2."
-    $te = ((TokenPersona "canal-web" "ejecutivo" "ejecutivo123").cuerpo | ConvertFrom-Json).access_token
+    $te = ((TokenPersona "canal-web" "ejecutivo" $claves.AUTH_CLAVE_EJECUTIVO).cuerpo | ConvertFrom-Json).access_token
     EnVm 'umask 077; cat > ~/tok; bash ~/bulkhead_cuentas.sh https://localhost:8081/api/web/cuentas/107 1 16 40 < ~/tok; : > ~/tok' $te
 
     # ---------------------------------------------------------------------
     Titulo "5. Bulkhead hacia ms-transferencias (bff-web, 5 simultaneas)"
-    $tc = ((TokenPersona "canal-web" "cliente" "cliente123").cuerpo | ConvertFrom-Json).access_token
+    $tc = ((TokenPersona "canal-web" "cliente" $claves.AUTH_CLAVE_CLIENTE).cuerpo | ConvertFrom-Json).access_token
     $antes = Saldo $tc
     EnVm 'umask 077; cat > ~/tok; for n in 1 15; do bash ~/bulkhead_transferencias.sh $n 100 < ~/tok; sleep 3; done; : > ~/tok' $tc
     Start-Sleep -Seconds 15
@@ -188,7 +198,7 @@ $cuerpo = {
     "Se detiene el contenedor de verdad (docker compose stop). Nadie reinicia"
     "bff-web: el circuito abre, el canal degrada, y al volver el servicio el"
     "circuito pasa por HALF_OPEN y cierra solo."
-    $tc = ((TokenPersona "canal-web" "cliente" "cliente123").cuerpo | ConvertFrom-Json).access_token
+    $tc = ((TokenPersona "canal-web" "cliente" $claves.AUTH_CLAVE_CLIENTE).cuerpo | ConvertFrom-Json).access_token
     $antes = Saldo $tc; $aceptadas = 0
     EnVm 'cd ~/bank-cloud && docker compose stop ms-transferencias 2>&1 | tail -1'
     $t0 = Get-Date
